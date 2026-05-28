@@ -237,8 +237,10 @@ def test_build_prompt_cats_no_override_varies_with_seed():
     assert len(results) > 1    # random picks across seeds
 
 
-def test_ultra_wildcard_enabled_all_false_encodes_text_only():
+def test_ultra_wildcard_enabled_all_false_uses_individual_toggles():
+    """enabled_all=False uses individual category toggles (not text-only)."""
     from nodes import UltraWildcardNode
+    from wildcards_db import WILDCARDS
     seen = []
 
     class FakeClip:
@@ -252,4 +254,51 @@ def test_ultra_wildcard_enabled_all_false_encodes_text_only():
                 shot=True, pose=True, scene=True,
                 expression=False, lighting=False, crowd=False,
                 creature=False, dynamic=False, weather=False, time=False)
-    assert seen == ["only this"]   # no wildcard fragment appended
+    result = seen[0]
+    # base text is preserved
+    assert "only this" in result
+    # at least one wildcard from enabled categories was appended
+    shot_hit = any(e in result for e in WILDCARDS["SHOT"])
+    pose_hit = any(e in result for e in WILDCARDS["POSE"])
+    scene_hit = any(e in result for e in WILDCARDS["SCENE"])
+    assert shot_hit or pose_hit or scene_hit
+
+def test_ultra_wildcard_enabled_all_false_all_toggles_off_returns_text():
+    """enabled_all=False with all categories off → plain text, no wildcards."""
+    from nodes import UltraWildcardNode
+    seen = []
+
+    class FakeClip:
+        def tokenize(self, text):
+            seen.append(text)
+            return text
+        def encode_from_tokens(self, tokens, return_pooled): return "cond", "pooled"
+
+    node = UltraWildcardNode()
+    node.encode(FakeClip(), "only this", seed=42, enabled_all=False,
+                shot=False, pose=False, scene=False,
+                expression=False, lighting=False, crowd=False,
+                creature=False, dynamic=False, weather=False, time=False)
+    assert seen == ["only this"]
+
+def test_ultra_wildcard_enabled_all_true_ignores_individual_toggles():
+    """enabled_all=True forces ALL categories on regardless of individual toggles."""
+    from nodes import UltraWildcardNode
+    from wildcards_db import WILDCARDS
+    seen = []
+
+    class FakeClip:
+        def tokenize(self, text):
+            seen.append(text)
+            return text
+        def encode_from_tokens(self, tokens, return_pooled): return "cond", "pooled"
+
+    node = UltraWildcardNode()
+    # All individual toggles are False, but enabled_all=True should override
+    node.encode(FakeClip(), "base", seed=42, enabled_all=True,
+                shot=False, pose=False, scene=False,
+                expression=False, lighting=False, crowd=False,
+                creature=False, dynamic=False, weather=False, time=False)
+    result = seen[0]
+    # With enabled_all=True all cats are on — result must be longer than base text
+    assert len(result) > len("base") + 10

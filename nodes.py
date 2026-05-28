@@ -121,7 +121,8 @@ class UltraWildcardNode:
         required = {
             "clip":        ("CLIP",),
             "text":        ("STRING", {"multiline": True, "default": ""}),
-            "seed":        ("INT", {"default": -1, "min": -1, "max": 0x7FFFFFFFFFFFFFFF}),
+            "seed":        ("INT", {"default": -1, "min": -1, "max": 0x7FFFFFFFFFFFFFFF,
+                                    "control_after_generate": True}),
             "enabled_all": ("BOOLEAN", {"default": True}),
         }
         for cat in WILDCARDS:
@@ -137,14 +138,16 @@ class UltraWildcardNode:
     def encode(self, clip, text, seed, enabled_all, shot_lock="random", **kwargs):
         if seed == -1:
             seed = random.randint(0, 0x7FFFFFFFFFFFFFFF)
+        # enabled_all=True  → force all categories on, ignore individual toggles
+        # enabled_all=False → use individual category toggles
         if enabled_all:
-            categories = {cat: kwargs.get(cat.lower(), False) for cat in WILDCARDS}
-            overrides = {}
-            if shot_lock != "random" and shot_lock in self._SHOT_LOCKS:
-                overrides["SHOT"] = self._SHOT_LOCKS[shot_lock]
-            full_prompt = _build_prompt_cats(text, categories, seed, overrides=overrides)
+            categories = {cat: True for cat in WILDCARDS}
         else:
-            full_prompt = text.strip()
+            categories = {cat: kwargs.get(cat.lower(), False) for cat in WILDCARDS}
+        overrides = {}
+        if shot_lock != "random" and shot_lock in self._SHOT_LOCKS:
+            overrides["SHOT"] = self._SHOT_LOCKS[shot_lock]
+        full_prompt = _build_prompt_cats(text, categories, seed, overrides=overrides)
         tokens = clip.tokenize(full_prompt)
         cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
         return ([[cond, {"pooled_output": pooled}]],)

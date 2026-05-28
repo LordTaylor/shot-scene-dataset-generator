@@ -302,9 +302,8 @@ PRESETS = {
 
 def pick(lst, seed=None):
     """Return one random item from a list."""
-    if seed is not None:
-        random.seed(seed)
-    return random.choice(lst)
+    rng = random.Random(seed)
+    return rng.choice(lst)
 
 
 def build_wildcard_block(preset="full", seed=None):
@@ -316,10 +315,8 @@ def build_wildcard_block(preset="full", seed=None):
         str   — joined prompt fragment (comma-separated)
         str   — short label safe for filenames
     """
-    if seed is not None:
-        random.seed(seed)
-
-    picked = {cat: random.choice(WILDCARDS[cat]) for cat in PRESETS[preset]}
+    rng = random.Random(seed)
+    picked = {cat: rng.choice(WILDCARDS[cat]) for cat in PRESETS[preset]}
 
     prompt_fragment = ", ".join(picked.values())
 
