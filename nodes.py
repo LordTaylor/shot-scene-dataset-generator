@@ -121,8 +121,7 @@ class UltraWildcardNode:
         required = {
             "clip":        ("CLIP",),
             "text":        ("STRING", {"multiline": True, "default": ""}),
-            "seed":        ("INT", {"default": -1, "min": -1, "max": 0x7FFFFFFFFFFFFFFF,
-                                    "control_after_generate": True}),
+            "seed":        ("INT", {"default": -1, "min": -1, "max": 0x7FFFFFFFFFFFFFFF}),
             "enabled_all": ("BOOLEAN", {"default": True}),
         }
         for cat in WILDCARDS:
@@ -134,6 +133,13 @@ class UltraWildcardNode:
     RETURN_TYPES = ("CONDITIONING",)
     FUNCTION     = "encode"
     CATEGORY     = "conditioning/wildcards"
+
+    @classmethod
+    def IS_CHANGED(cls, seed, **kwargs):
+        # seed=-1 means "random every run" — return NaN so ComfyUI never caches
+        if seed == -1:
+            return float("nan")
+        return seed
 
     def encode(self, clip, text, seed, enabled_all, shot_lock="random", **kwargs):
         if seed == -1:
