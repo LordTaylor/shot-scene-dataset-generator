@@ -1,0 +1,53 @@
+"""
+Character config example — copy this file to characters/<your_name>.py
+and fill in your character's details.
+
+  cp characters/my_character.py.example characters/hero.py
+
+The generator reads this file and injects CHARACTER into every prompt.
+"""
+
+CHARACTER = {
+    # ---------- IDENTITY ------------------------------------------------
+    # Trigger word(s) your LoRA was trained on (or a plain description)
+    "trigger": "my_character_trigger",
+
+    # Core visual description of the character.
+    # Put LoRA trigger first, then hair/eyes/outfit details.
+    "description": (
+        "my_character_trigger, "
+        "long silver hair, blue eyes, "
+        "red jacket, black jeans, "
+        "1girl, solo, female,"
+    ),
+
+    # Style tags applied to every image.
+    "style": (
+        "best quality, masterpiece, "
+        "cel-shaded, clean lines, sharp detail,"
+    ),
+
+    # Negative prompt — what to exclude from every image.
+    "negative": (
+        "(worst quality, low quality, blurry, jpeg artifacts), "
+        "extra limbs, bad anatomy, malformed hands, extra fingers, "
+        "watermark, text, signature, "
+        "multiple subjects, character sheet, reference sheet"
+    ),
+
+    # ---------- LoRA (optional) -----------------------------------------
+    # Set lora to None if you are not using a LoRA.
+    "lora":          None,          # e.g. "MyChar_v1/my_char_lora.safetensors"
+    "lora_strength": 0.75,          # 0.5–1.0 typical range
+
+    # ---------- CHECKPOINT ----------------------------------------------
+    "checkpoint": "YourCheckpoint/model.safetensors",
+
+    # ---------- GENERATION SETTINGS ------------------------------------
+    "width":     768,
+    "height":    1024,
+    "steps":     28,
+    "cfg":       7.0,
+    "sampler":   "euler_ancestral",   # or "dpmpp_2m_sde"
+    "scheduler": "karras",
+}

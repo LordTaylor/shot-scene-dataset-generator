@@ -1,0 +1,31 @@
+# ── Python ──────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+*.so
+
+# ── Virtual envs ────────────────────────────────────────────
+.venv/
+venv/
+env/
+
+# ── Characters — NEVER commit real character configs ────────
+# Only the .example template is tracked.
+characters/*.py
+!characters/*.py.example
+
+# ── Output / logs ───────────────────────────────────────────
+output/
+*.log
+*.jsonl
+
+# ── AI agent / session planning files ──────────────────────
+PLAN.md
+docs/superpowers/
+SESSION_NOTES.md
+
+# ── macOS ───────────────────────────────────────────────────
+.DS_Store
