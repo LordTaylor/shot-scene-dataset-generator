@@ -250,21 +250,17 @@ def test_build_prompt_cats_no_override_varies_with_seed():
     assert len(results) > 1    # random picks across seeds
 
 
-def test_ultra_wildcard_is_changed_minus_one_returns_nan():
-    """seed=-1 must return NaN so ComfyUI never serves cached conditioning."""
-    import math
+def test_ultra_wildcard_is_changed_always_returns_seed():
+    """IS_CHANGED must return the seed for every value — ComfyUI Randomize/
+    Increment/Decrement controls drive diversity by changing the seed before
+    each run; returning the seed value lets ComfyUI cache Fixed runs correctly."""
     from nodes import UltraWildcardNode
-    result = UltraWildcardNode.IS_CHANGED(seed=-1)
-    assert math.isnan(result)
-
-def test_ultra_wildcard_is_changed_fixed_seed_returns_seed():
-    """Fixed seed returns the seed itself — same seed = cached (deterministic)."""
-    from nodes import UltraWildcardNode
-    assert UltraWildcardNode.IS_CHANGED(seed=42) == 42
     assert UltraWildcardNode.IS_CHANGED(seed=0) == 0
+    assert UltraWildcardNode.IS_CHANGED(seed=42) == 42
+    assert UltraWildcardNode.IS_CHANGED(seed=0x7FFFFFFFFFFFFFFF) == 0x7FFFFFFFFFFFFFFF
 
-def test_ultra_wildcard_minus_one_seed_produces_variety():
-    """seed=-1 must produce different results across multiple encode() calls."""
+def test_ultra_wildcard_different_seeds_produce_variety():
+    """Different seeds must produce different prompts (diversity in batch mode)."""
     from nodes import UltraWildcardNode
     seen = set()
 
@@ -273,13 +269,13 @@ def test_ultra_wildcard_minus_one_seed_produces_variety():
         def encode_from_tokens(self, tokens, return_pooled): return tokens, "pooled"
 
     node = UltraWildcardNode()
-    for _ in range(15):
-        result = node.encode(FakeClip(), "char", seed=-1, enabled_all=False,
+    for s in range(15):
+        result = node.encode(FakeClip(), "char", seed=s, enabled_all=False,
                              shot=True, pose=False, scene=False,
                              expression=False, lighting=False, crowd=False,
                              creature=False, dynamic=False, weather=False, time=False)
-        seen.add(result[0][0][0])  # conditioning tensor (text string here)
-    assert len(seen) > 1, "seed=-1 should produce variety, got identical results"
+        seen.add(result[0][0][0])
+    assert len(seen) > 1, "Different seeds must produce different outputs"
 
 def test_ultra_wildcard_enabled_all_false_uses_individual_toggles():
     """enabled_all=False uses individual category toggles (not text-only)."""

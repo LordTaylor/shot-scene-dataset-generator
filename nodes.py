@@ -121,7 +121,7 @@ class UltraWildcardNode:
         required = {
             "clip":        ("CLIP",),
             "text":        ("STRING", {"multiline": True, "default": ""}),
-            "seed":        ("INT", {"default": -1, "min": -1, "max": 0x7FFFFFFFFFFFFFFF}),
+            "seed":        ("INT", {"default": 0, "min": 0, "max": 0x7FFFFFFFFFFFFFFF}),
             "enabled_all": ("BOOLEAN", {"default": True}),
         }
         for cat in WILDCARDS:
@@ -136,14 +136,12 @@ class UltraWildcardNode:
 
     @classmethod
     def IS_CHANGED(cls, seed, **kwargs):
-        # seed=-1 means "random every run" — return NaN so ComfyUI never caches
-        if seed == -1:
-            return float("nan")
+        # ComfyUI Randomize/Increment/Decrement change seed before each run.
+        # Returning the seed value lets ComfyUI cache Fixed runs and re-execute
+        # the rest, which is exactly what the UI controls imply.
         return seed
 
     def encode(self, clip, text, seed, enabled_all, shot_lock="random", **kwargs):
-        if seed == -1:
-            seed = random.randint(0, 0x7FFFFFFFFFFFFFFF)
         # enabled_all=True  → force all categories on, ignore individual toggles
         # enabled_all=False → use individual category toggles
         if enabled_all:
